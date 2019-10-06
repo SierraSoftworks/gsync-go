@@ -11,7 +11,8 @@ import (
 
 func TestSemaphore(t *testing.T) {
 	t.Run("Semaphore Behaviour", func(t *testing.T) {
-		s := gsync.NewSemaphore("", 1, 1)
+		s, err := gsync.NewSemaphoreWithValue("", 1)
+		require.NoError(t, err)
 		require.NotNil(t, s)
 
 		defer s.Close()
@@ -49,11 +50,13 @@ func TestSemaphore(t *testing.T) {
 	})
 
 	t.Run("Shared Semaphores", func(t *testing.T) {
-		s1 := gsync.NewSemaphore("/test", 1, 1)
+		s1, err := gsync.NewSemaphoreWithValue("test", 1)
+		require.NoError(t, err)
 		require.NotNil(t, s1)
 		defer s1.Close()
 
-		s2 := gsync.NewSemaphore("/test", 0, 1)
+		s2, err := gsync.NewSemaphore("test")
+		require.NoError(t, err)
 		require.NotNil(t, s2)
 		defer s2.Close()
 

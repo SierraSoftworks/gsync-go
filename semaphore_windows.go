@@ -3,6 +3,7 @@
 package gsync
 
 import (
+	"math"
 	"time"
 )
 
@@ -12,16 +13,22 @@ type semaphoreWindows struct {
 
 // NewSemaphore creates a new named semaphore with the specified initial
 // and maximum counts.
-func NewSemaphore(name string, initial, max uint16) Semaphore {
-	handle := createSemaphoreW(name, int64(initial), int64(max))
+func NewSemaphoreWithValue(name string, initial int) (Semaphore, error) {
+	handle, err := createSemaphoreW(name, int64(initial), math.MaxInt32)
 
-	if handle == -1 {
-		return nil
+	if err != nil {
+		return nil, err
 	}
 
 	return &semaphoreWindows{
 		handle: handle,
-	}
+	}, nil
+}
+
+// NewSemaphore creates a new named semaphore with the specified initial
+// and maximum counts.
+func NewSemaphore(name string) (Semaphore, error) {
+	return NewSemaphoreWithValue(name, 0)
 }
 
 func (s *semaphoreWindows) Release(count uint16) {

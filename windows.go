@@ -19,18 +19,18 @@ var (
 	closeHandleHandle, _         = syscall.GetProcAddress(kernel32, "CloseHandle")
 )
 
-func createSemaphoreW(name string, initial, max int64) int64 {
+func createSemaphoreW(name string, initial, max int64) (int64, error) {
 	namePtr := uintptr(0)
 	if name != "" {
 		namePtr = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(name)))
 	}
 
-	ret, _, _ := syscall.Syscall6(uintptr(createSemaphoreWHandle), uintptr(4), 0, uintptr(initial), uintptr(max), namePtr, 0, 0)
-	if ret == 0 {
-		return -1
+	ret, _, callErr := syscall.Syscall6(uintptr(createSemaphoreWHandle), uintptr(4), 0, uintptr(initial), uintptr(max), namePtr, 0, 0)
+	if callErr != 0 {
+		return -1, callErr
 	}
 
-	return int64(ret)
+	return int64(ret), nil
 }
 
 func releaseSemaphore(handle int64, count int) error {
@@ -42,7 +42,7 @@ func releaseSemaphore(handle int64, count int) error {
 	return nil
 }
 
-func createMutexW(name string, initial bool) int64 {
+func createMutexW(name string, initial bool) (int64, error) {
 	namePtr := uintptr(0)
 	if name != "" {
 		namePtr = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(name)))
@@ -53,12 +53,12 @@ func createMutexW(name string, initial bool) int64 {
 		initialInt = 1
 	}
 
-	ret, _, _ := syscall.Syscall(uintptr(createMutexWHandle), uintptr(3), 0, uintptr(initialInt), namePtr)
-	if ret == 0 {
-		return -1
+	ret, _, callErr := syscall.Syscall(uintptr(createMutexWHandle), uintptr(3), 0, uintptr(initialInt), namePtr)
+	if callErr != 0 {
+		return -1, callErr
 	}
 
-	return int64(ret)
+	return int64(ret), nil
 }
 
 func releaseMutex(handle int64) error {

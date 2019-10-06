@@ -3,6 +3,7 @@
 package gsync
 
 import (
+	"os"
 	"runtime"
 	"time"
 )
@@ -13,9 +14,9 @@ type mutexWindows struct {
 
 // NewMutex constructs a new mutex with the provided name and initial state.
 func NewMutex(name string, initial bool) Mutex {
-	handle := createMutexW(name, initial)
+	handle, err := createMutexW(name, initial)
 
-	if handle == -1 {
+	if err != nil && !os.IsExist(err) {
 		return nil
 	}
 
