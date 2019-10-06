@@ -25,7 +25,7 @@ func NewSemaphore(name string, initial, max uint16) Semaphore {
 }
 
 func (s *semaphoreWindows) Release(count uint16) {
-	semaphoreOperation(s.handle, int(count))
+	releaseSemaphore(s.handle, int(count))
 }
 
 func (s *semaphoreWindows) Wait(timeout time.Duration) error {
