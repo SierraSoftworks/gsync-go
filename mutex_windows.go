@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type mutex struct {
+type mutexWindows struct {
 	handle int64
 }
 
@@ -19,18 +19,18 @@ func NewMutex(name string, initial bool) Mutex {
 		return nil
 	}
 
-	return &mutex{
+	return &mutexWindows{
 		handle: handle,
 	}
 }
 
-func (s *mutex) Release() {
+func (s *mutexWindows) Release() {
 	if releaseMutex(s.handle) == nil {
 		runtime.UnlockOSThread()
 	}
 }
 
-func (s *mutex) Wait(timeout time.Duration) error {
+func (s *mutexWindows) Wait(timeout time.Duration) error {
 	runtime.LockOSThread()
 
 	if err := waitForSingleObject(s.handle, timeout.Milliseconds()); err != nil {
@@ -41,6 +41,6 @@ func (s *mutex) Wait(timeout time.Duration) error {
 	return nil
 }
 
-func (s *mutex) Close() {
+func (s *mutexWindows) Close() {
 	closeHandle(s.handle)
 }

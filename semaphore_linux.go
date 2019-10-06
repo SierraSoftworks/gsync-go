@@ -1,4 +1,5 @@
 // +build linux
+
 package gsync
 
 import (
@@ -46,7 +47,7 @@ type semop struct {
 }
 
 type timespec struct {
-	tv_sec int32
+	tv_sec  int32
 	tv_nsec int32
 }
 
@@ -92,7 +93,7 @@ func semaphoreOperationTimed(handle int64, op int16, timeout time.Duration) erro
 	}
 
 	to := &timespec{
-		tv_sec: int32(timeout.Truncate(time.Second).Seconds()),
+		tv_sec:  int32(timeout.Truncate(time.Second).Seconds()),
 		tv_nsec: int32((timeout - timeout.Truncate(time.Second)).Nanoseconds()),
 	}
 
