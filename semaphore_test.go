@@ -11,11 +11,13 @@ import (
 
 func TestSemaphore(t *testing.T) {
 	t.Run("Semaphore Behaviour", func(t *testing.T) {
-		s, err := gsync.NewSemaphoreWithValue("", 1)
+		s, err := gsync.NewSemaphore("")
 		require.NoError(t, err)
 		require.NotNil(t, s)
 
 		defer s.Close()
+
+		s.Release(1)
 
 		ch := make(chan struct{})
 		go func() {
@@ -36,7 +38,7 @@ func TestSemaphore(t *testing.T) {
 
 		select {
 		case <-ch:
-			t.Error("Failed to wait upon locked semaphore")
+			t.Fatal("Failed to wait upon locked semaphore")
 		case <-time.After(100 * time.Millisecond):
 		}
 
@@ -50,12 +52,18 @@ func TestSemaphore(t *testing.T) {
 	})
 
 	t.Run("Shared Semaphores", func(t *testing.T) {
-		s1, err := gsync.NewSemaphoreWithValue("test", 1)
+		s1, err := gsync.NewSemaphore("/test")
 		require.NoError(t, err)
 		require.NotNil(t, s1)
 		defer s1.Close()
 
-		s2, err := gsync.NewSemaphore("test")
+		if ss, ok := s1.(gsync.Settable); ok {
+			ss.Set(1)
+		} else {
+			s1.Release(1)
+		}
+
+		s2, err := gsync.NewSemaphore("/test")
 		require.NoError(t, err)
 		require.NotNil(t, s2)
 		defer s2.Close()
@@ -79,7 +87,7 @@ func TestSemaphore(t *testing.T) {
 
 		select {
 		case <-ch:
-			t.Error("Failed to wait upon locked semaphore 2")
+			t.Fatal("Failed to wait upon locked semaphore 2")
 		case <-time.After(100 * time.Millisecond):
 		}
 

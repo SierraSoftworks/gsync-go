@@ -3,6 +3,7 @@
 package gsync
 
 import (
+	"fmt"
 	"hash/fnv"
 	"syscall"
 	"time"
@@ -25,21 +26,6 @@ type semaphoreLinux struct {
 	handle int64
 }
 
-// NewSemaphoreWithValue creates a new named semaphore with the specified initial count.
-func NewSemaphoreWithValue(name string, initial int) (Semaphore, error) {
-	handle, err := createSemaphore(name, 1, iCREAT)
-
-	if err != nil {
-		return nil, err
-	}
-
-	semaphoreControl(handle, 0, iSETVAL, int(initial))
-
-	return &semaphoreLinux{
-		handle: handle,
-	}, nil
-}
-
 // NewSemaphore creates a new named semaphore.
 func NewSemaphore(name string) (Semaphore, error) {
 	handle, err := createSemaphore(name, 1, iCREAT)
@@ -47,6 +33,8 @@ func NewSemaphore(name string) (Semaphore, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("created semaphore", name, handle)
 
 	return &semaphoreLinux{
 		handle: handle,
@@ -58,11 +46,16 @@ func (s *semaphoreLinux) Release(count uint16) {
 		return
 	}
 
-	semaphoreOperation(s.handle, 0, int16(count), 0)
+	fmt.Println(semaphoreOperation(s.handle, 0, int16(count), iNOWAIT))
 }
 
 func (s *semaphoreLinux) Wait(timeout time.Duration) error {
 	return semaphoreOperationTimed(s.handle, -1, timeout)
+}
+
+func (s *semaphoreLinux) Set(count uint16) error {
+	_, err := semaphoreControl(s.handle, 0, iSETVAL, int(count))
+	return err
 }
 
 func (s *semaphoreLinux) Close() {
@@ -73,11 +66,6 @@ type semop struct {
 	semNum  uint16
 	semOp   int16
 	semFlag int16
-}
-
-type timespec struct {
-	tvSec  int32
-	tvNsec int32
 }
 
 func ftok(name string) int32 {
@@ -135,12 +123,9 @@ func semaphoreOperationTimed(handle int64, op int16, timeout time.Duration) erro
 		},
 	}
 
-	to := &timespec{
-		tvSec:  int32(timeout.Truncate(time.Second).Seconds()),
-		tvNsec: int32((timeout - timeout.Truncate(time.Second)).Nanoseconds()),
-	}
+	to := syscall.NsecToTimespec(timeout.Nanoseconds())
 
-	_, _, callErr := syscall.Syscall6(uintptr(syscall.SYS_SEMOP), uintptr(handle), uintptr(unsafe.Pointer(&ops[0])), uintptr(1), uintptr(unsafe.Pointer(&to)), 0, 0)
+	_, _, callErr := syscall.Syscall6(uintptr(syscall.SYS_SEMTIMEDOP), uintptr(handle), uintptr(unsafe.Pointer(&ops[0])), uintptr(1), uintptr(unsafe.Pointer(&to)), 0, 0)
 	if callErr != 0 {
 		return callErr
 	}

@@ -11,10 +11,13 @@ import (
 
 func TestMutex(t *testing.T) {
 	t.Run("Mutex Behaviour", func(t *testing.T) {
-		m := gsync.NewMutex("", false)
+		m, err := gsync.NewMutex("")
+		require.NoError(t, err)
 		require.NotNil(t, m)
 
 		defer m.Close()
+
+		m.Release()
 
 		ch := make(chan struct{})
 		ch2 := make(chan struct{})
@@ -52,11 +55,15 @@ func TestMutex(t *testing.T) {
 	})
 
 	t.Run("Shared Mutexes", func(t *testing.T) {
-		m1 := gsync.NewMutex("test", false)
+		m1, err := gsync.NewMutex("test")
+		require.NoError(t, err)
 		require.NotNil(t, m1)
 		defer m1.Close()
 
-		m2 := gsync.NewMutex("test", false)
+		m1.Release()
+
+		m2, err := gsync.NewMutex("test")
+		require.NoError(t, err)
 		require.NotNil(t, m2)
 		defer m2.Close()
 

@@ -12,3 +12,8 @@ type Semaphore interface {
 	Wait(timeout time.Duration) error
 	Close()
 }
+
+// Settable semaphores allow you to adjust the value of the semaphore directly.
+type Settable interface {
+	Set(count uint16) error
+}

@@ -14,7 +14,11 @@ import (
 )
 
 func main() {
-    m := gsync.NewMutex("/gsync/example", false)
+    m, err := gsync.NewMutex("/gsync/example")
+    if err != nil {
+        fmt.Fatalf("failed to create mutex: %s\n", err)
+    }
+
     defer m.Close()
 
     if m.Wait(50 * time.Millisecond) != nil {
@@ -36,7 +40,17 @@ import (
 )
 
 func main() {
-    s := gsync.NewSemaphore("/gsync/example", 10, 10)
+    s, err := gsync.NewSemaphore("/gsync/example")
+    if err != nil {
+        fmt.Fatalf("failed to create semaphore: %s\n", err)
+    }
+
+    if ss, ok := s.(gsync.Settable); ok {
+        ss.Set(10)
+    } else {
+        ss.Release(10)
+    }
+
     defer s.Release(1)
     defer s.Close()
 
