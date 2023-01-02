@@ -14,12 +14,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+        run: go test -v -race ./...
 
-      - name: Upload code coverage
-        uses: codecov/codecov-action@v2
-        with:
-          file: ./coverage.txt
   test-linux:
     name: Test Linux
     runs-on: ubuntu-latest
